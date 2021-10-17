@@ -1,15 +1,11 @@
 (define-module (lispymon explore)
   #:use-module (jlib print)
   #:use-module (jlib lists)
+  #:use-module (jlib random)
   #:use-module (lispymon utils)
   #:use-module (lispymon lispymon)
   #:export  (explore-display
              explore-update))
-
-(define (random:list l)
-  (list-ref l (random (length l))))
-(define (random:vector l)
-  (random:list (vector->list l)))
 
 (define area-path "assets/areas/")
 
