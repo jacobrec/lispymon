@@ -1,0 +1,20 @@
+{
+    "name": "Startington",
+    "intro": "TODO: Describe town",
+    "options": ["explore", "rest"],
+    "rest": {
+        "chance": 1.0,
+        "encounters": [],
+        "successes": [
+            "You find a kind stranger who offers to let you rest on his couch for the night. It's a little uncomfortable, but the sound of rain soothes you. You awaken in the morning feeling refreshed.",
+            "You find a comfy looking park bench to lie down on. Fortunatly there is no rain and you sleep soundly. You awake, now your back is sore."
+        ]
+    },
+    "explore": {
+        "encounters": [[1,"dialog"]],
+        "dialog": [
+            "Man, I love trackpants. They are so comfortable and easy to wear",
+            "I hope it rains later. I love rain."
+        ]
+    }
+}

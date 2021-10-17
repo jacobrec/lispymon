@@ -3,6 +3,7 @@
   #:use-module (jlib lists)
   #:use-module (lispymon user)
   #:use-module (lispymon intro)
+  #:use-module (lispymon explore)
   #:use-module (ice-9 copy-tree)
   #:export  (update
              get-display
@@ -13,7 +14,7 @@
 (define (validate-response uid selection)
   (define-values (text selections) (get-display uid))
   (or (string? selections)
-      (member selection (map string-downcase (vector->list selections)))))
+      (member (string-downcase selection) (map string-downcase (vector->list selections)))))
 
 ;; Takes in data and a selection and updates the users data. Returns new data
 (define (update datad selection)
@@ -21,6 +22,7 @@
   (define state (assoc-get 'state data))
   (case state
     ((intro) (intro-update data selection))
+    ((explore) (explore-update data selection))
     (else data)))
 
 ;; Takes in user id and returns text and options
@@ -30,7 +32,8 @@
   (define state-data (assoc-get 'state-data data))
   (case state
     ((intro) (intro-display state-data))
-    (else (values "Error. Unknown state. There is nothing you can do now." #("Okay :(")))))
+    ((explore) (explore-display state-data))
+    (else (values "Error: Unknown state" #("Okay :(")))))
 
 
 ;; State is one of :intro, :battle, :travel, :explore

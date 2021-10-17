@@ -23,7 +23,7 @@
     ((begin) (acons 'name selection (assoc-set! data 'state-data 'give-mon)))
     ((give-mon) (acons 'party (create-starter selection) (assoc-set! data 'state-data 'confirm)))
     ;; TODO: make confirm go to somewhere else
-    ((confirm) (alist-merge data `((state . explore) (state-data . startinton))))
+    ((confirm) (alist-merge data `((state . explore) (state-data . startington))))
     (else data)))
 
 (define (intro-display statedata)
