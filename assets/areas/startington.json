@@ -1,7 +1,7 @@
 {
     "name": "Startington",
     "intro": "TODO: Describe town",
-    "options": ["explore", "rest"],
+    "options": ["explore", "rest", "travel"],
     "rest": {
         "chance": 1.0,
         "encounters": [],
@@ -15,6 +15,11 @@
         "dialog": [
             "Kid Jimmy: Man, I love trackpants. They are so comfortable and easy to wear",
             "Lady Mary: I hope it rains later. I love rain."
+        ]
+    },
+    "travel": {
+        "locations": [
+            "nearbywoods"
         ]
     }
 }

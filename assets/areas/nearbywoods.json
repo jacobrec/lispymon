@@ -1,0 +1,24 @@
+{
+    "name": "Nearby Woods",
+    "intro": "TODO: Describe woods",
+    "options": ["explore", "rest", "travel"],
+    "rest": {
+        "chance": 1.0,
+        "encounters": [],
+        "successes": [
+            "You take shelter in the woods for the night."
+        ]
+    },
+    "explore": {
+        "encounters": [[1,"dialog"]],
+        "dialog": [
+            "This is a pretty dark looking forest, isn't it",
+            "Ahhhhh"
+        ]
+    },
+    "travel": {
+        "locations": [
+            "startington"
+        ]
+    }
+}
