@@ -59,7 +59,6 @@
     (string-replace-substring (car match) ".json" "")))
 
 (define (area-symbols-to-names areas)
-  (println "Blip" areas)
   (map (lambda (x) (assoc-get "name" (get-loc-string (string-append x ".json"))))
        areas))
 ;;;;
