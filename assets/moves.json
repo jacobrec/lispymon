@@ -1,0 +1,10 @@
+{
+    "moves": [
+        {
+            "name": "Strike",
+            "power": 30,
+            "type": [255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "requirements": [["level", 1]]
+        }
+    ]
+}

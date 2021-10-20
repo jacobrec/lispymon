@@ -4,6 +4,7 @@
   #:use-module (jlib lists)
   #:use-module (srfi srfi-1)
   #:use-module (rnrs bytevectors)
+  #:use-module (lispymon utils)
   #:export (create-lispymon
             create-lispymon-nature
             create-lispymon-nurture))
@@ -96,7 +97,6 @@
   (define base (lispymon-basestats lispymon))
   (define level (lispymon-level lispymon))
   (define dv (assoc-get 'dvs (assoc-get 'nurture lispymon)))
-  (println base level dv)
   (list->vector (map (lambda (x)
                        (define b (stat-scale (at base x)))
                        (define d (vector-ref dv x))
@@ -233,9 +233,34 @@
   (println))
 
 
+(define (lispymon-moves mon)
+  (define move-list (assoc-get "moves" (load-json-file "assets/moves.json")))
+  (define (can-learn move-idx)
+    (define move (vector-ref move-list move-idx))
+    (define reqs (assoc-get "requirements" move))
+    (define (check-req req)
+      (define type (vector-ref req 0))
+      (cond
+       ((string=? type "level") (>= (lispymon-level mon) (vector-ref req 1)))
+       (else (println "ERROR: Unimplemented move requirement") #f)))
+    (every check-req (vector->list reqs)))
+  (filter can-learn (iota (vector-length move-list))))
+
 #|
 (define example-type-solid-light-plant-fire #vu8(255 255 255 0 0 255 0 0 0 0 0))
 (define example-type-solid-dark-mineral-ice #vu8(255 0 0 0 255 0 0 255 0 0 0))
 |#
 
 
+(define (create-tmp)
+  (define ex-type #vu8(255 0 0 255 0 0 0 255 0 0 0))
+  (define ex-stat #vu8(126 0 63 126 189 255))
+  (define nat (create-lispymon-nature ex-type ex-stat))
+  (define nur (create-lispymon-nurture 1000 #(0 0 0 0 0 0) '()))
+  (define mon (create-lispymon nat nur))
+  mon)
+
+(define mon (create-tmp))
+(print-type-table (lispymon-type mon))
+(println (lispymon-stats mon))
+(println (lispymon-moves mon))
