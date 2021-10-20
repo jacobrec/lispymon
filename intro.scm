@@ -3,15 +3,19 @@
   #:use-module (jlib lists)
   #:use-module (lispymon utils)
   #:use-module (lispymon lispymon)
+  #:use-module (rnrs bytevectors)
   #:export  (intro-display
              intro-update))
 
 
 (define intro-data (load-json-file "assets/intro.json"))
 
+(define (vector->bytevector v)
+  (u8-list->bytevector (vector->list v)))
 (define (create-starter type) ; TODO: take chosen type into account
-  (define ex-type #vu8(255 0 0 255 0 0 0 255 0 0 0))
-  (define ex-stat #vu8(126 0 63 126 189 255))
+  (define st (assoc-get (list "starters" type) intro-data))
+  (define ex-type (vector->bytevector (assoc-get "type" st)))
+  (define ex-stat (vector->bytevector (assoc-get "stats" st)))
   (define nat (create-lispymon-nature ex-type ex-stat))
   (define nur (create-lispymon-nurture 1000 #(0 0 0 0 0 0) '()))
   (define mon (create-lispymon nat nur))
@@ -30,6 +34,6 @@
   (case statedata
     ((begin) (values (assoc-get "name" intro-data) "Name: "))
     ((give-mon) (values (assoc-get "mon-pref" intro-data)
-                        #("Fire" "Ice" "Electric")))
-    ((confirm) (values (assoc-get "confirm" intro-data) #("Okay")))
+                        (assoc-get "starter-choices" intro-data)))
+    ((confirm) (values (assoc-get "confirm" intro-data) (assoc-get "confirm-but" intro-data)))
     (else (values "Error. Unknown Intro state." #("Okay :(")))))
