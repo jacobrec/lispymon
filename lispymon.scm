@@ -98,7 +98,7 @@
   (define level (lispymon-level lispymon))
   (define dv (assoc-get 'dvs (assoc-get 'nurture lispymon)))
   (list->vector (map (lambda (x)
-                       (define b (stat-scale (at base x)))
+                       (define b (stat-growthscale (at base x)))
                        (define d (vector-ref dv x))
                        (round (+ (if (= 0 x) (+ 10 level) 5) (* level b) (sqrt d))))
                      (iota 6))))
@@ -109,22 +109,22 @@
   "Scaley")
 
 ;; since stats are stored as a vu8 array they become scaled
-(define (stat-scale bv)
+(define (stat-growthscale bv)
   (define lower 0.5)
   (define upper 2.5)
   (+ lower (* (- upper lower) (/ bv 255))))
 (define (stat-health stat)
-  (stat-scale (vector-ref stat 0)))
+  (vector-ref stat 0))
 (define (stat-strength stat)
-  (stat-scale (vector-ref stat 1)))
+  (vector-ref stat 1))
 (define (stat-magic stat)
-  (stat-scale (vector-ref stat 2)))
+  (vector-ref stat 2))
 (define (stat-defense stat)
-  (stat-scale (vector-ref stat 3)))
+  (vector-ref stat 3))
 (define (stat-resistance stat)
-  (stat-scale (vector-ref stat 4)))
+  (vector-ref stat 4))
 (define (stat-speed stat)
-  (stat-scale (vector-ref stat 5)))
+  (vector-ref stat 5))
 
 ;;; Each of the type getters returns a number from 0-1 indicating a percent
 ;; 0% solidity is entirely spectral, 100% is entirely physical
@@ -136,34 +136,40 @@
 
 ;; plant animal and mineral are connected the percent between these 3 must equal 100
 (define (type-plant type)
-  (define sum (+ (at type 2) (at type 3) (at type 4)))
-  (/ (at type 2) sum))
+  (define sum (+ 0 (at type 2) (at type 3) (at type 4)))
+  (if (= 0 sum) 0 (/ (at type 2) sum)))
 (define (type-animal type)
-  (define sum (+ (at type 2) (at type 3) (at type 4)))
-  (/ (at type 3) sum))
+  (define sum (+ 0 (at type 2) (at type 3) (at type 4)))
+  (if (= 0 sum) 0 (/ (at type 3) sum)))
 (define (type-mineral type)
-  (define sum (+ (at type 2) (at type 3) (at type 4)))
-  (/ (at type 4) sum))
+  (define sum (+ 0 (at type 2) (at type 3) (at type 4)))
+  (if (= 0 sum) 0 (/ (at type 4) sum)))
+(define (pam-typeless? type)
+  (define sum (+ 0 (at type 2) (at type 3) (at type 4)))
+  (= 0 sum))
 
 ;; elemental types also must sum to 100%
 (define (type-fire type)
   (define sum (fold + 0 (map (lambda (x) (at type (+ 5 x))) (iota 6))))
-  (/ (at type 5) sum))
+  (if (= 0 sum) 0 (/ (at type 5) sum)))
 (define (type-electric type)
   (define sum (fold + 0 (map (lambda (x) (at type (+ 5 x))) (iota 6))))
-  (/ (at type 6) sum))
+  (if (= 0 sum) 0 (/ (at type 6) sum)))
 (define (type-ice type)
   (define sum (fold + 0 (map (lambda (x) (at type (+ 5 x))) (iota 6))))
-  (/ (at type 7) sum))
+  (if (= 0 sum) 0 (/ (at type 7) sum)))
 (define (type-water type)
   (define sum (fold + 0 (map (lambda (x) (at type (+ 5 x))) (iota 6))))
-  (/ (at type 8) sum))
+  (if (= 0 sum) 0 (/ (at type 8) sum)))
 (define (type-earth type)
   (define sum (fold + 0 (map (lambda (x) (at type (+ 5 x))) (iota 6))))
-  (/ (at type 9) sum))
+  (if (= 0 sum) 0 (/ (at type 9) sum)))
 (define (type-air type)
   (define sum (fold + 0 (map (lambda (x) (at type (+ 5 x))) (iota 6))))
-  (/ (at type 10) sum))
+  (if (= 0 sum) 0 (/ (at type 10) sum)))
+(define (element-typeless? type)
+  (define sum (fold + 0 (map (lambda (x) (at type (+ 5 x))) (iota 6))))
+  (= 0 sum))
 
 
 (define (at bv i)
@@ -202,8 +208,12 @@
            types)))
   (define pam-type (type-circle type-super-effective type-not-very-effective
                                 (list type-plant type-animal type-mineral)))
+  (define ptl (or (pam-typeless? type1)
+                  (pam-typeless? type2)))
   (define elemental (type-circle super-effective not-very-effective elemental-types))
-  (exact->inexact (* solid affinity pam-type elemental)))
+  (define etl (or (element-typeless? type1)
+                  (element-typeless? type2)))
+  (exact->inexact (* solid affinity (if ptl 1 pam-type) (if etl 1 elemental))))
 
 ;; Type 1 uses a move of type 2
 (define (calculate-stab-modifier type1 type2)
@@ -246,21 +256,33 @@
     (every check-req (vector->list reqs)))
   (filter can-learn (iota (vector-length move-list))))
 
+(define (get-move idx)
+  (define move-list (assoc-get "moves" (load-json-file "assets/moves.json")))
+  (vector-ref move-list idx))
+
+(define (move-type move)
+  (u8-list->bytevector (vector->list (assoc-get "type" move))))
+(define (move-power move)
+  (assoc-get "power" move))
+
+;; Mon1 is attacking Mon2 with the move indicated by the corrisponding global move index
+(define (calculate-damage mon1 mon2 moveidx)
+  (define s1 (lispymon-stats mon1))
+  (define s2 (lispymon-stats mon2))
+  (define m (get-move moveidx))
+  (define mt (move-type m))
+  (define ad (+ (/ (* (type-solidity mt) (stat-strength s1)) (stat-defense s2))
+                (/ (* (- 1 (type-solidity mt)) (stat-magic s1)) (stat-resistance s2))))
+  (define base-damage (+ 2 (/ (* ad (move-power m) (+ 2 (* 2/5 (lispymon-level mon1)))) 50)))
+  (define type-modifier (calculate-effective-modifier (move-type m) (lispymon-type mon2)))
+  (define stab-modifier (calculate-stab-modifier (move-type m) (lispymon-type mon1)))
+  (define crit-modifier 1.0)
+  (* base-damage
+     type-modifier
+     stab-modifier
+     crit-modifier))
+
 #|
 (define example-type-solid-light-plant-fire #vu8(255 255 255 0 0 255 0 0 0 0 0))
 (define example-type-solid-dark-mineral-ice #vu8(255 0 0 0 255 0 0 255 0 0 0))
 |#
-
-
-(define (create-tmp)
-  (define ex-type #vu8(255 0 0 255 0 0 0 255 0 0 0))
-  (define ex-stat #vu8(126 0 63 126 189 255))
-  (define nat (create-lispymon-nature ex-type ex-stat))
-  (define nur (create-lispymon-nurture 1000 #(0 0 0 0 0 0) '()))
-  (define mon (create-lispymon nat nur))
-  mon)
-
-(define mon (create-tmp))
-(print-type-table (lispymon-type mon))
-(println (lispymon-stats mon))
-(println (lispymon-moves mon))
