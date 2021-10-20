@@ -43,6 +43,7 @@
 (define (create-lispymon-nurture exp dvs moves)
   `((exp . ,exp)
     (dvs . ,dvs)
+    (damage . 0)
     (moves . ,moves)))
 (define (create-lispymon-nature type stats)
   (define height-weight-mod (u8-list->bytevector (list (random 256) (random 256))))
@@ -51,10 +52,15 @@
 (define (lispymon-genes lispymon)
   (assoc-get 'genes lispymon))
 
+(define (lispymon-health lispymon)
+  (define damage (assoc-get '(nurture damage) lispymon))
+  (define total-health (stat-health (lispymon-stats lispymon)))
+  (max 0 (- total-health damage)))
+
 ;; exp = level ^ 3
 (define (lispymon-level lispymon)
   (define exp (lispymon-exp lispymon))
-  (floor (expt exp 1/3)))
+  (max 1 (floor (expt exp 1/3))))
 (define (lispymon-exp lispymon)
   (+ 1 (assoc-get 'exp
                   (assoc-get 'nurture lispymon))))
