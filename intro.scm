@@ -12,7 +12,7 @@
 
 (define (vector->bytevector v)
   (u8-list->bytevector (vector->list v)))
-(define (create-starter type) ; TODO: take chosen type into account
+(define (create-starter type)
   (define st (assoc-get (list "starters" type) intro-data))
   (define ex-type (vector->bytevector (assoc-get "type" st)))
   (define ex-stat (vector->bytevector (assoc-get "stats" st)))
@@ -26,7 +26,6 @@
   (case (assoc-get 'state-data data)
     ((begin) (acons 'name selection (assoc-set! data 'state-data 'give-mon)))
     ((give-mon) (acons 'party (create-starter selection) (assoc-set! data 'state-data 'confirm)))
-    ;; TODO: make confirm go to somewhere else
     ((confirm) (alist-merge data `((state . explore) (state-data . startington))))
     (else data)))
 
